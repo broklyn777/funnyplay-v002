@@ -1,0 +1,107 @@
+import Link from '@/components/Link'
+import { PageSEO } from '@/components/SEO'
+import Tag from '@/components/Tag'
+import siteMetadata from '@/data/siteMetadata'
+import formatDate from '@/lib/utils/formatDate'
+import { sortedBlogPost, allCoreContent } from '@/lib/utils/contentlayer'
+import { InferGetStaticPropsType } from 'next'
+import NewsletterForm from '@/components/NewsletterForm'
+import { allBlogs } from 'contentlayer/generated'
+import Image from 'next/image'
+
+const MAX_DISPLAY = 5
+
+export const getStaticProps = async () => {
+  // TODO: move computation to get only the essential frontmatter to contentlayer.config
+  const sortedPosts = sortedBlogPost(allBlogs)
+  const posts = allCoreContent(sortedPosts)
+
+  return { props: { posts } }
+}
+
+export default function Home({ posts }: InferGetStaticPropsType<typeof getStaticProps>) {
+  return (
+    <>
+      <PageSEO title={siteMetadata.title} description={siteMetadata.description} />
+      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="space-y-2 pt-10 pb-8 md:space-y-5">
+          <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
+            Latest
+          </h1>
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+            {siteMetadata.description}
+          </p>
+        </div>
+        <ul className="grid grid-cols-1 dark:divide-gray-700 sm:grid-cols-3 sm:gap-x-10">
+          {!posts.length && 'No posts found.'}
+          {posts.slice(0, MAX_DISPLAY).map((post) => {
+            const { slug, date, title, summary, tags, images } = post
+            return (
+              <li key={slug} className="py-12">
+                <article>
+                  <div className="group space-y-2 xl:items-baseline xl:space-y-0 ">
+                    <div className="relative mb-3 flex h-72 overflow-hidden rounded-2xl shadow-xl lg:h-96">
+                      <Link href={`/blog/${slug}`}>
+                        <Image
+                          src={images[0]}
+                          layout="fill"
+                          className="bg-cover bg-center transition duration-500 ease-in-out hover:cursor-pointer group-hover:scale-150"
+                        />
+                      </Link>
+                    </div>
+                    <div className="space-y-5 xl:col-span-3">
+                      <div className="space-y-6">
+                        <div className="flex flex-wrap justify-between">
+                          {tags.map((tag) => (
+                            <Tag key={tag} text={tag} />
+                          ))}
+                          <dl>
+                            <dt className="sr-only">Published on</dt>
+                            <dd className="text-base font-medium leading-6 text-gray-500 group-hover:text-primary-500 dark:text-gray-400">
+                              <time dateTime={date}>{formatDate(date)}</time>
+                            </dd>
+                          </dl>
+                        </div>
+
+                        <div>
+                          <h2 className="text-2xl font-bold leading-8 tracking-tight">
+                            <Link
+                              href={`/blog/${slug}`}
+                              className="text-gray-900 transition duration-500 ease-in-out group-hover:text-primary-500 dark:text-gray-100"
+                            >
+                              {title}
+                            </Link>
+                          </h2>
+                        </div>
+                      </div>
+                      {/* <div className="text-base font-medium leading-6">
+                        <Link
+                          href={`/blog/${slug}`}
+                          className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                          aria-label={`Read "${title}"`}
+                        >
+                          Read more &rarr;
+                        </Link>
+                      </div> */}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+      {posts.length > MAX_DISPLAY && (
+        <div className="flex justify-end text-base font-medium leading-6">
+          <Link
+            href="/blog"
+            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            aria-label="all posts"
+          >
+            All Posts &rarr;
+          </Link>
+        </div>
+      )}
+    </>
+  )
+}
